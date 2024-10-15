@@ -16,23 +16,11 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef BIOS_DECOMPRESS_CALLBACK_H
-#define BIOS_DECOMPRESS_CALLBACK_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <nds/bios.h>
+#include <nds/memory.h>
 #include <nds/ndstypes.h>
 
-extern TDecompressionStream decompressBiosCallback;
-
-
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif // BIOS_DECOMPRESS_CALLBACK_H
-
+/*-------------------------------------------------------------------------
+arm7_hookGame
+Adds a hook in the game's ARM7 binary to our own code
+-------------------------------------------------------------------------*/
+int hookNdsRetail (const tNDSHeader* ndsHeader, const u32* cheatData, u32* cardEngineLocation);

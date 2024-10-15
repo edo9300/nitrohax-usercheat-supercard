@@ -29,10 +29,10 @@ public:
 	void clearText (void);
 	void clearText (int startRow, int startCol, int endRow, int endCol);
 	void putText (const char* str);
-	int  putText (const char* str, int startCol, int endRow, int endCol, int curRow, int curCol);
-	int  putText (const char* str, int startCol, int endRow, int endCol)
+	int  putText (const char* str, int startRow, int startCol, int endRow, int endCol, int curRow, int curCol);
+	int  putText (const char* str, int startRow, int startCol, int endRow, int endCol)
 	{
-		return putText (str, startCol, endRow, endCol, row, col);
+		return putText (str, startRow, startCol, endRow, endCol, row, col);
 	}
 
 	void putChar (char chr);

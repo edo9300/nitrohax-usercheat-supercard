@@ -62,11 +62,12 @@ void ConsoleText::setPosition (int row, int col)
 
 void ConsoleText::putText (const char* str)
 {
-	putText (str, 0, height-1, width-1);
+	putText (str, 0, 0, height-1, width-1);
 }
 
-int ConsoleText::putText (const char* str, int startCol, int endRow, int endCol, int curRow, int curCol)
+int ConsoleText::putText (const char* str, int startRow, int startCol, int endRow, int endCol, int curRow, int curCol)
 {
+	(void)startRow;
 	int pos = 0;
 	int len = strlen (str);
 	row = curRow;

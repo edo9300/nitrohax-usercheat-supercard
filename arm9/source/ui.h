@@ -37,7 +37,6 @@ public:
 		bool isDirectory;
 	};
 
-
 	enum TEXT_TYPE {TEXT_TITLE, TEXT_INFO};
 
 	void showMessage (TEXT_TYPE textType, const char* str, ...);
@@ -80,8 +79,8 @@ private:
 		TEXTBOX_E = TEXTBOX_OFFSET + 5, TEXTBOX_SW = TEXTBOX_OFFSET + 6, TEXTBOX_S = TEXTBOX_OFFSET + 7,
 		TEXTBOX_SE = TEXTBOX_OFFSET + 8};
 
- 	static const int GO_BUTTON_PALETTE = 8;
- 	static const int GO_BUTTON_OFFSET = 256;
+	static const int GO_BUTTON_PALETTE = 8;
+	static const int GO_BUTTON_OFFSET = 256;
 
 	static const int BLANK_TILE = 0;
 
@@ -95,7 +94,7 @@ private:
 	// GUI elements
 	Sprite* scrollbox;
 	Sprite* cursor[NUM_CURSORS];
-	vu16* guiSubMap;
+	u16* guiSubMap;
 	int scrollboxPosition;
 
 	// Menu elements
@@ -119,13 +118,11 @@ private:
 	static bool fileInfoPredicate (const FileInfo& lhs, const FileInfo& rhs);
 	void showFileFolder (std::vector<UserInterface::FileInfo> &contents);
 
-	int menuInput(bool enableGoButton);
-
-	void putGuiTile (int val, int row, int col, int palette, bool doubleSize);
+ 	void putGuiTile (int val, int row, int col, int palette, bool doubleSize);
 	void clearFolderBackground(void);
-	void showCursor (bool visible);
-	void setCursorPosition (int offset);
-	void putButtonBg (BUTTON_BG_OFFSETS buttonBg, int position);
+ 	void showCursor (bool visible);
+ 	void setCursorPosition (int offset);
+ 	void putButtonBg (BUTTON_BG_OFFSETS buttonBg, int position);
 	void showScrollbar (bool visisble);
 	void setScrollbarPosition (int offset, int listLength);
 	void showGoButton (bool visible, int left, int top);

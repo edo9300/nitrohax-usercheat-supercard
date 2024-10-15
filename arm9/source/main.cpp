@@ -25,13 +25,17 @@
 
 #include "cheat.h"
 #include "ui.h"
-#include "nds_card.h"
 #include "cheat_engine.h"
 #include "crc.h"
 #include "version.h"
 
+struct ndsHeader {
+sNDSHeader header;
+char padding[0x200 - sizeof(sNDSHeader)];
+};
+
 const char TITLE_STRING[] = "Nitro Hax " VERSION_STRING "\nWritten by Chishm";
-const char* defaultFiles[] = {"cheats.xml", "/DS/NitroHax/cheats.xml", "/NitroHax/cheats.xml", "/data/NitroHax/cheats.xml", "/cheats.xml"};
+const char* defaultFiles[] = {"usrcheat.dat", "/DS/NitroHax/usrcheat.dat", "/NitroHax/usrcheat.dat", "/data/NitroHax/usrcheat.dat", "/usrcheat.dat", "/_nds/usrcheat.dat", "/_nds/TWiLightMenu/extras/usrcheat.dat"};
 
 
 static inline void ensure (bool condition, const char* errorMsg) {
@@ -49,14 +53,11 @@ int main(int argc, const char* argv[])
     (void)argc;
     (void)argv;
 
-	u32 ndsHeader[0x80];
-	u32* cheatDest;
-	int curCheat = 0;
-	char gameid[4];
+	u32 gameid;
 	uint32_t headerCRC;
 	std::string filename;
-	int c;
 	FILE* cheatFile;
+	bool doFilter=false;
 
 	ui.showMessage (UserInterface::TEXT_TITLE, TITLE_STRING);
 
@@ -65,80 +66,112 @@ int main(int argc, const char* argv[])
 	while(1);
 #endif
 
+	sysSetCardOwner (BUS_OWNER_ARM9);
+	
+	// reuse ds header parsed by the ds firmware and then altered by flashme
+	auto& ndsHeader = *((struct ndsHeader*)__NDSHeader);
+
+	memcpy(((char*)&ndsHeader) + 0x80, ((char*)&ndsHeader) + 0x94, 8);
+	memset(((char*)&ndsHeader) + 0x94, 0, 8);
+	
+	//arm9executeAddress and cardControl13 are altered by flashme and become unrecoverable
+	//use some heuristics to try to guess them back and check for the header crc to match
+	ndsHeader.header.arm9executeAddress = ((char*)ndsHeader.header.arm9destination) + 0x800;
+	bool crc_matched = false;
+	for(auto control : {0x00416657, 0x00586000, 0x00416017}) {
+		ndsHeader.header.cardControl13 = control;
+		if(crc_matched = ndsHeader.header.headerCRC16 == swiCRC16(0xFFFF, (void*)&ndsHeader, 0x15E); crc_matched) {
+			break;
+		}
+	}
+	ensure(crc_matched, "Header crc didn't match\nRestart!");
+	
 	ensure (fatInitDefault(), "FAT init failed");
 
 	// Read cheat file
 	for (u32 i = 0; i < sizeof(defaultFiles)/sizeof(const char*); i++) {
 		cheatFile = fopen (defaultFiles[i], "rb");
 		if (NULL != cheatFile) break;
+		doFilter=true;
 	}
 	if (NULL == cheatFile) {
-		filename = ui.fileBrowser (".xml");
+		filename = ui.fileBrowser ("usrcheat.dat");
 		ensure (filename.size() > 0, "No file specified");
 		cheatFile = fopen (filename.c_str(), "rb");
 		ensure (cheatFile != NULL, "Couldn't load cheats");
 	}
 
 	ui.showMessage (UserInterface::TEXT_TITLE, TITLE_STRING);
+
+	gameid = ((int*)&ndsHeader)[3];
+	headerCRC = crc32((const char*)&ndsHeader, sizeof(ndsHeader));
+
 	ui.showMessage ("Loading codes");
 
-	c = fgetc(cheatFile);
-	ensure (c != 0xFF && c != 0xFE, "File is in an unsupported unicode encoding");
-	fseek (cheatFile, 0, SEEK_SET);
-
 	CheatCodelist* codelist = new CheatCodelist();
-	ensure (codelist->load(cheatFile), "Can't read cheat list\n");
-	fclose (cheatFile);
-
-	ui.showMessage (UserInterface::TEXT_TITLE, TITLE_STRING);
-
-	sysSetCardOwner (BUS_OWNER_ARM9);
-
-	ui.showMessage ("Loaded codes\nYou can remove your flash card\nRemove DS Card");
-	do {
-		swiWaitForVBlank();
-		getHeader (ndsHeader);
-	} while (ndsHeader[0] != 0xffffffff);
-
-	ui.showMessage ("Insert Game");
-	do {
-		swiWaitForVBlank();
-		getHeader (ndsHeader);
-	} while (ndsHeader[0] == 0xffffffff);
-
-	// Delay half a second for the DS card to stabilise
-	for (int i = 0; i < 30; i++) {
-		swiWaitForVBlank();
+	if(!codelist->load(cheatFile, gameid, headerCRC, doFilter)) {
+		union {
+			uint32_t bbb;
+			struct {
+				char a;
+				char b;
+				char c;
+				char d;
+			};
+		} converter{gameid};
+		ui.showMessage ("Can't read cheat list for game id: %c%c%c%c, header CRC: 0x%X\n", converter.a, converter.b, converter.c, converter.d, headerCRC);
+		while(1) swiWaitForVBlank();
 	}
-
-	getHeader (ndsHeader);
-
-	ui.showMessage ("Finding game");
-
-	memcpy (gameid, ((const char*)ndsHeader) + 12, 4);
-	headerCRC = crc32((const char*)ndsHeader, sizeof(ndsHeader));
+	// ensure (codelist->load(cheatFile, gameid, headerCRC, doFilter), "Can't read cheat list\n");
+	fclose (cheatFile);
 	CheatFolder *gameCodes = codelist->getGame (gameid, headerCRC);
 
 	if (!gameCodes) {
 		gameCodes = codelist;
 	}
+	
+	if(codelist->getContents().empty()) {
+		filename = ui.fileBrowser ("usrcheat.dat");
+		ensure (filename.size() > 0, "No file specified");
+		cheatFile = fopen (filename.c_str(), "rb");
+		ensure (cheatFile != NULL, "Couldn't load cheats");
+
+		ui.showMessage ("Loading codes");
+
+		CheatCodelist* codelist = new CheatCodelist();
+		// ensure (codelist->load(cheatFile, gameid, headerCRC, doFilter), "Can't read cheat list\n");
+		if(!codelist->load(cheatFile, gameid, headerCRC, doFilter)) {
+			union {
+				uint32_t bbb;
+				struct {
+					char a;
+					char b;
+					char c;
+					char d;
+				};
+			} converter{gameid};
+			ui.showMessage ("Can't read cheat list for game id: %c%c%c%c, header CRC: 0x%X\n", converter.a, converter.b, converter.c, converter.d, headerCRC);
+			while(1) swiWaitForVBlank();
+		}
+		fclose (cheatFile);
+		gameCodes = codelist->getGame (gameid, headerCRC);
+
+		if (!gameCodes) {
+			gameCodes = codelist;
+		}
+	}
 
 	ui.cheatMenu (gameCodes, gameCodes);
 
 
-	cheatDest = (u32*) malloc(CHEAT_MAX_DATA_SIZE);
-	ensure (cheatDest != NULL, "Bad malloc\n");
+	auto cheatList = gameCodes->getEnabledCodeData();
 
-	std::list<CheatWord> cheatList = gameCodes->getEnabledCodeData();
-
-	for (std::list<CheatWord>::iterator cheat = cheatList.begin(); cheat != cheatList.end(); cheat++) {
-		cheatDest[curCheat++] = (*cheat);
-	}
+	ensure(cheatList.size() <= (CHEAT_MAX_DATA_SIZE / 4), "Too many cheats selected");
 
 	ui.showMessage (UserInterface::TEXT_TITLE, TITLE_STRING);
 	ui.showMessage ("Running game");
 
-	runCheatEngine (cheatDest, curCheat * sizeof(u32));
+	runCheatEngine (cheatList.data(), cheatList.size() * sizeof(u32));
 
 	while(1) {
 

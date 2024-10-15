@@ -1,0 +1,674 @@
+Archive member included to satisfy reference by file (symbol)
+
+C:/devkitPro/libnds/lib\libnds7.a(card.o)
+                              read_card.o (cardPolledTransfer)
+C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                              C:/devkitPro/libnds/lib\libnds7.a(card.o) (swiDelay)
+C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0\libgcc.a(_udivsi3.o)
+                              encryption.o (__aeabi_uidivmod)
+C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0\libgcc.a(_dvmd_tls.o)
+                              C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0\libgcc.a(_udivsi3.o) (__aeabi_idiv0)
+C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0/../../../../arm-none-eabi/lib\libg.a(libc_a-memcpy-stub.o)
+                              read_card.o (memcpy)
+
+There are no discarded input sections
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+vram             0x06000000         0x00010000
+arm9ram          0x027fd800         0x00000800
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD cheat.o
+LOAD encryption.o
+LOAD main.arm7.o
+LOAD main.arm9.o
+LOAD read_card.o
+LOAD cheat_engine.o
+LOAD clear_cache.arm9.o
+LOAD clear_mem.o
+LOAD crt0.arm9.o
+LOAD launch_ds_crt0.o
+LOAD read_bios.o
+LOAD reset.arm7.o
+LOAD reset.arm9.o
+LOAD C:/devkitPro/libnds/lib\libnds7.a
+START GROUP
+LOAD C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0\libgcc.a
+LOAD C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0/../../../../arm-none-eabi/lib\libg.a
+LOAD C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0/../../../../arm-none-eabi/lib\libc.a
+LOAD C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0/../../../../arm-none-eabi/lib\libsysbase.a
+END GROUP
+                0x06002088                        __vram_start = ORIGIN (vram)
+                0x06010000                        __vram_top = (ORIGIN (vram) + LENGTH (vram))
+                0x0600ffa0                        __sp_irq = (__vram_top - 0x60)
+                0x0600fea0                        __sp_svc = (__sp_irq - 0x100)
+                0x0600fda0                        __sp_usr = (__sp_svc - 0x100)
+                0x0600fff8                        __irq_flags = (__vram_top - 0x8)
+                0x0600fffc                        __irq_vector = (__vram_top - 0x4)
+                0x027fd800                        __arm9ram_start = ORIGIN (arm9ram)
+                0x027fe000                        __arm9ram_top = (ORIGIN (arm9ram) + LENGTH (arm9ram))
+                0x027fe000                        __arm9_sp_irq = __arm9ram_top
+                0x027fdff0                        __arm9_sp_svc = (__arm9_sp_irq - 0x10)
+                0x027fdfe0                        __arm9_sp_usr = (__arm9_sp_svc - 0x10)
+
+.init           0x06000000       0xf0
+                0x06000000                        __text_start = .
+ *(.init)
+ .init          0x06000000       0xf0 launch_ds_crt0.o
+                0x06000000                _start
+                0x060000f0                        . = ALIGN (0x4)
+
+.plt
+ *(.plt)
+                0x060000f0                        __arm9_source_start = .
+
+.arm9           0x027fd800      0x5d4 load address 0x060000f0
+                0x027fd800                        __arm9_start = .
+ *.arm9.*(.text*)
+ .text          0x027fd800      0x3bc main.arm9.o
+                0x027fd800                arm9_main
+ .text          0x027fdbbc        0x0 clear_cache.arm9.o
+ .text.arm9_clearCache
+                0x027fdbbc       0x3c clear_cache.arm9.o
+                0x027fdbbc                arm9_clearCache
+ *fill*         0x027fdbf8        0x8 ff
+ .text          0x027fdc00       0x94 crt0.arm9.o
+                0x027fdc00                _arm9_start
+ *fill*         0x027fdc94        0xc ff
+ .text          0x027fdca0      0x124 reset.arm9.o
+                0x027fdca0                arm9_reset
+ *.arm9.*(.data*)
+ .data          0x027fddc4        0x4 main.arm9.o
+                0x027fddc4                arm9_errorCode
+ .data          0x027fddc8        0x0 clear_cache.arm9.o
+ .data          0x027fddc8        0x0 crt0.arm9.o
+ .data          0x027fddc8        0x0 reset.arm9.o
+                0x027fddc8                        __arm9_bss_start = ABSOLUTE (.)
+ *.arm9.*(.bss*)
+ .bss           0x027fddc8        0xc main.arm9.o
+                0x027fddc8                arm9_BLANK_RAM
+                0x027fddcc                arm9_errorClearBG
+                0x027fddd0                arm9_stateFlag
+ .bss           0x027fddd4        0x0 clear_cache.arm9.o
+ .bss           0x027fddd4        0x0 crt0.arm9.o
+ .bss           0x027fddd4        0x0 reset.arm9.o
+                0x027fddd4                        __arm9_bss_end = ABSOLUTE (.)
+                0x027fddd4                        __arm9_end = .
+                0x060006c4                        __arm9_source_end = (__arm9_source_start + SIZEOF (.arm9))
+                0x060006c4                        . = __arm9_source_end
+                0x060006c4                        . = ALIGN (0x4)
+
+.text           0x060006c4     0x19a4
+ *(.text)
+ .text          0x060006c4      0x204 cheat.o
+                0x060006c4                arm7_hookGame
+ .text          0x060008c8      0x2a4 encryption.o
+                0x060008c8                crypt_64bit_up
+                0x06000968                crypt_64bit_down
+                0x06000a08                apply_keycode
+                0x06000abc                init_keycode
+ .text          0x06000b6c      0x3f4 main.arm7.o
+                0x06000b6c                arm7_readFirmware
+                0x06000c44                arm7_resetMemory
+                0x06000df0                arm7_loadBinary
+                0x06000e94                arm7_main
+ .text          0x06000f60      0x728 read_card.o
+                0x06001008                cardInit
+                0x060015c0                cardRead
+ .text          0x06001688        0x8 cheat_engine.o
+                0x06001688                cheat_engine_size
+                0x0600168c                intr_orig_return_offset
+ .text          0x06001690        0x0 clear_mem.o
+ .text          0x06001690        0x0 launch_ds_crt0.o
+ .text          0x06001690        0x0 read_bios.o
+ .text          0x06001690       0x98 reset.arm7.o
+                0x06001690                arm7_reset
+ .text          0x06001728        0x0 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+ *fill*         0x06001728        0x8 ff
+ .text          0x06001730        0x0 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+ .text          0x06001730      0x114 C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0\libgcc.a(_udivsi3.o)
+                0x06001730                __aeabi_uidiv
+                0x06001730                __udivsi3
+                0x06001824                __aeabi_uidivmod
+ .text          0x06001844        0x4 C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0\libgcc.a(_dvmd_tls.o)
+                0x06001844                __aeabi_idiv0
+                0x06001844                __aeabi_ldiv0
+ .text          0x06001848        0x0 C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0/../../../../arm-none-eabi/lib\libg.a(libc_a-memcpy-stub.o)
+ *(.stub)
+ *(.text.*)
+ .text.cheat_engine_start
+                0x06001848      0x400 cheat_engine.o
+                0x06001848                cheat_engine_start
+                0x06001c28                cheat_engine_end
+ .text.arm7_clearmem
+                0x06001c48       0x3c clear_mem.o
+                0x06001c48                arm7_clearmem
+ .text.readBios
+                0x06001c84       0x30 read_bios.o
+                0x06001c84                readBios
+ .text.cardWriteCommand
+                0x06001cb4       0x28 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+                0x06001cb4                cardWriteCommand
+ .text.cardPolledTransfer
+                0x06001cdc       0x44 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+                0x06001cdc                cardPolledTransfer
+ .text.cardStartTransfer
+                0x06001d20       0x48 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+                0x06001d20                cardStartTransfer
+ .text.cardWriteAndRead
+                0x06001d68       0x30 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+                0x06001d68                cardWriteAndRead
+ .text.cardParamCommand
+                0x06001d98       0x2e C:/devkitPro/libnds/lib\libnds7.a(card.o)
+                0x06001d98                cardParamCommand
+ *fill*         0x06001dc6        0x2 ff
+ .text.cardReadID
+                0x06001dc8       0x20 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+                0x06001dc8                cardReadID
+ .text.cardReset
+                0x06001de8       0x50 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+                0x06001de8                cardReset
+ .text.cardReadHeader
+                0x06001e38       0x58 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+                0x06001e38                cardReadHeader
+ .text.swiDelay
+                0x06001e90        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001e90                swiDelay
+ .text.swiSleep
+                0x06001e94        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001e94                swiSleep
+ .text.swiChangeSoundBias
+                0x06001e98        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001e98                swiChangeSoundBias
+ .text.swiDivide
+                0x06001e9c        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001e9c                swiDivide
+ .text.swiRemainder
+                0x06001ea0        0x8 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ea0                swiRemainder
+ .text.swiDivMod
+                0x06001ea8        0xc C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ea8                swiDivMod
+ .text.swiCopy  0x06001eb4        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001eb4                swiCopy
+ .text.swiFastCopy
+                0x06001eb8        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001eb8                swiFastCopy
+ .text.swiSqrt  0x06001ebc        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ebc                swiSqrt
+ .text.swiCRC16
+                0x06001ec0        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ec0                swiCRC16
+ .text.swiIsDebugger
+                0x06001ec4        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ec4                swiIsDebugger
+ .text.swiUnpackBits
+                0x06001ec8        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ec8                swiUnpackBits
+ .text.swiDecompressLZSSWram
+                0x06001ecc        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ecc                swiDecompressLZSSWram
+ .text.swiDecompressLZSSVramNTR
+                0x06001ed0        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ed0                swiDecompressLZSSVramNTR
+ .text.swiDecompressLZSSVramTWL
+                0x06001ed4        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ed4                swiDecompressLZSSVramTWL
+ .text.swiDecompressHuffman
+                0x06001ed8        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ed8                swiDecompressHuffman
+ .text.swiDecompressRLEWram
+                0x06001edc        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001edc                swiDecompressRLEWram
+ .text.swiDecompressRLEVram
+                0x06001ee0        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ee0                swiDecompressRLEVram
+ .text.swiHalt  0x06001ee4        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ee4                swiHalt
+ .text.swiGetSineTable
+                0x06001ee8        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ee8                swiGetSineTable
+ .text.swiGetPitchTable
+                0x06001eec        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001eec                swiGetPitchTable
+ .text.swiGetVolumeTable
+                0x06001ef0        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ef0                swiGetVolumeTable
+ .text.swiSwitchToGBAMode
+                0x06001ef4        0x4 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ef4                swiSwitchToGBAMode
+ .text.swiSetHaltCR
+                0x06001ef8        0x8 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+                0x06001ef8                swiSetHaltCR
+ .text.memcpy   0x06001f00      0x130 C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0/../../../../arm-none-eabi/lib\libg.a(libc_a-memcpy-stub.o)
+                0x06001f00                memcpy
+ .text.memcpy.__stub
+                0x06002030       0x2c linker stubs
+ *(.gnu.warning)
+ *(.gnu.linkonce.t*)
+ *(.glue_7)
+ .glue_7        0x06002068        0x0 linker stubs
+ *(.glue_7t)
+ .glue_7t       0x06002068        0x0 linker stubs
+                0x06002068                        . = ALIGN (0x4)
+
+.vfp11_veneer   0x06002068        0x0
+ .vfp11_veneer  0x06002068        0x0 linker stubs
+
+.v4_bx          0x06002068        0x0
+ .v4_bx         0x06002068        0x0 linker stubs
+
+.iplt           0x06002068        0x0
+ .iplt          0x06002068        0x0 cheat.o
+
+.fini
+ *(.fini)
+                0x06002068                        __text_end = .
+
+.rodata         0x06002068       0x20
+ *(.rodata)
+ .rodata        0x06002068        0x6 main.arm9.o
+ *fill*         0x0600206e        0x2 ff
+ .rodata        0x06002070        0x8 read_card.o
+ .rodata        0x06002078       0x10 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+ *all.rodata*(*)
+ *(.roda)
+ *(.rodata.*)
+ *(.gnu.linkonce.r*)
+                0x06002088                        . = ALIGN (0x4)
+
+.rel.dyn        0x06002088        0x0
+ .rel.iplt      0x06002088        0x0 cheat.o
+
+.ARM.extab
+ *(.ARM.extab* .gnu.linkonce.armextab.*)
+                0x06002088                        __exidx_start = .
+
+.ARM.exidx
+ *(.ARM.exidx* .gnu.linkonce.armexidx.*)
+                0x06002088                        __exidx_end = .
+                0x06002088                        . = ALIGN (0x4)
+                [!provide]                        PROVIDE (__preinit_array_start = .)
+
+.preinit_array
+ *(.preinit_array)
+                [!provide]                        PROVIDE (__preinit_array_end = .)
+                [!provide]                        PROVIDE (__init_array_start = .)
+
+.init_array
+ *(.init_array)
+                [!provide]                        PROVIDE (__init_array_end = .)
+                [!provide]                        PROVIDE (__fini_array_start = .)
+
+.fini_array
+ *(.fini_array)
+                [!provide]                        PROVIDE (__fini_array_end = .)
+
+.ctors          0x06002088        0x0
+ *crtbegin.o(.ctors)
+ *(EXCLUDE_FILE(*crtend.o) .ctors)
+ *(SORT_BY_NAME(.ctors.*))
+ *(.ctors)
+                0x06002088                        . = ALIGN (0x4)
+
+.dtors          0x06002088        0x0
+ *crtbegin.o(.dtors)
+ *(EXCLUDE_FILE(*crtend.o) .dtors)
+ *(SORT_BY_NAME(.dtors.*))
+ *(.dtors)
+                0x06002088                        . = ALIGN (0x4)
+
+.eh_frame       0x06002088        0x0
+ *(.eh_frame)
+                0x06002088                        . = ALIGN (0x4)
+
+.gcc_except_table
+                0x06002088        0x0
+ *(.gcc_except_table)
+                0x06002088                        . = ALIGN (0x4)
+
+.jcr
+ *(.jcr)
+
+.got
+ *(.got.plt)
+ *(.got)
+
+.vram           0x06002088        0x0
+                0x06002088                        __vram_start = ABSOLUTE (.)
+ *(.vram)
+ *vram.*(.text)
+                0x06002088                        . = ALIGN (0x4)
+                0x06002088                        __vram_end = ABSOLUTE (.)
+
+.data           0x06002088        0x4
+                0x06002088                        __data_start = ABSOLUTE (.)
+ *(.data)
+ .data          0x06002088        0x0 cheat.o
+ .data          0x06002088        0x0 encryption.o
+ .data          0x06002088        0x4 main.arm7.o
+                0x06002088                ndsHeader
+ .data          0x0600208c        0x0 read_card.o
+ .data          0x0600208c        0x0 cheat_engine.o
+ .data          0x0600208c        0x0 clear_mem.o
+ .data          0x0600208c        0x0 launch_ds_crt0.o
+ .data          0x0600208c        0x0 read_bios.o
+ .data          0x0600208c        0x0 reset.arm7.o
+ .data          0x0600208c        0x0 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+ .data          0x0600208c        0x0 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+ .data          0x0600208c        0x0 C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0\libgcc.a(_udivsi3.o)
+ .data          0x0600208c        0x0 C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0\libgcc.a(_dvmd_tls.o)
+ .data          0x0600208c        0x0 C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0/../../../../arm-none-eabi/lib\libg.a(libc_a-memcpy-stub.o)
+ *(.data.*)
+ *(.gnu.linkonce.d*)
+                0x0600208c                        . = ALIGN (0x4)
+                0x0600208c                        __data_end = ABSOLUTE (.)
+
+.igot.plt       0x0600208c        0x0
+ .igot.plt      0x0600208c        0x0 cheat.o
+
+.bss            0x0600208c     0x5074
+                0x0600208c                        __bss_start = ABSOLUTE (.)
+                0x0600208c                        __bss_start__ = ABSOLUTE (.)
+ *(.dynbss)
+ *(.gnu.linkonce.b*)
+ *(.bss*)
+ .bss           0x0600208c        0x0 cheat.o
+ .bss           0x0600208c     0x1054 encryption.o
+ .bss           0x060030e0        0x0 main.arm7.o
+ .bss           0x060030e0     0x4020 read_card.o
+ .bss           0x06007100        0x0 cheat_engine.o
+ .bss           0x06007100        0x0 clear_mem.o
+ .bss           0x06007100        0x0 launch_ds_crt0.o
+ .bss           0x06007100        0x0 read_bios.o
+ .bss           0x06007100        0x0 reset.arm7.o
+ .bss           0x06007100        0x0 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+ .bss           0x06007100        0x0 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+ .bss           0x06007100        0x0 C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0\libgcc.a(_udivsi3.o)
+ .bss           0x06007100        0x0 C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0\libgcc.a(_dvmd_tls.o)
+ .bss           0x06007100        0x0 C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0/../../../../arm-none-eabi/lib\libg.a(libc_a-memcpy-stub.o)
+ *(COMMON)
+                0x06007100                        . = ALIGN (0x4)
+                0x06007100                        __bss_end = .
+                0x06007100                        __bss_end__ = .
+                0x06007100                        _end = .
+                0x06007100                        __end__ = .
+                [!provide]                        PROVIDE (end = _end)
+
+.stab
+ *(.stab)
+
+.stabstr
+ *(.stabstr)
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment        0x00000000       0x23
+ *(.comment)
+ .comment       0x00000000       0x23 cheat.o
+                                 0x24 (size before relaxing)
+ .comment       0x00000023       0x24 encryption.o
+ .comment       0x00000023       0x24 main.arm7.o
+ .comment       0x00000023       0x24 main.arm9.o
+ .comment       0x00000023       0x24 read_card.o
+ .comment       0x00000023       0x24 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+ .comment       0x00000023       0x24 C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0/../../../../arm-none-eabi/lib\libg.a(libc_a-memcpy-stub.o)
+
+.ARM.attributes
+                0x00000000       0x2f
+ .ARM.attributes
+                0x00000000       0x26 cheat.o
+ .ARM.attributes
+                0x00000026       0x26 encryption.o
+ .ARM.attributes
+                0x0000004c       0x26 main.arm7.o
+ .ARM.attributes
+                0x00000072       0x26 main.arm9.o
+ .ARM.attributes
+                0x00000098       0x26 read_card.o
+ .ARM.attributes
+                0x000000be       0x1a cheat_engine.o
+ .ARM.attributes
+                0x000000d8       0x1a clear_cache.arm9.o
+ .ARM.attributes
+                0x000000f2       0x1a clear_mem.o
+ .ARM.attributes
+                0x0000010c       0x1a crt0.arm9.o
+ .ARM.attributes
+                0x00000126       0x1a launch_ds_crt0.o
+ .ARM.attributes
+                0x00000140       0x1a read_bios.o
+ .ARM.attributes
+                0x0000015a       0x1a reset.arm7.o
+ .ARM.attributes
+                0x00000174       0x21 reset.arm9.o
+ .ARM.attributes
+                0x00000195       0x26 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+ .ARM.attributes
+                0x000001bb       0x1a C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+ .ARM.attributes
+                0x000001d5       0x1c C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0\libgcc.a(_udivsi3.o)
+ .ARM.attributes
+                0x000001f1       0x1c C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0\libgcc.a(_dvmd_tls.o)
+ .ARM.attributes
+                0x0000020d       0x2a C:/devkitPro/devkitARM/bin/../lib/gcc/arm-none-eabi/14.2.0/../../../../arm-none-eabi/lib\libg.a(libc_a-memcpy-stub.o)
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges  0x00000000      0x2d0
+ *(.debug_aranges)
+ .debug_aranges
+                0x00000000       0x20 cheat.o
+ .debug_aranges
+                0x00000020       0x20 encryption.o
+ .debug_aranges
+                0x00000040       0x20 main.arm7.o
+ .debug_aranges
+                0x00000060       0x20 main.arm9.o
+ .debug_aranges
+                0x00000080       0x20 read_card.o
+ .debug_aranges
+                0x000000a0       0x20 cheat_engine.o
+ .debug_aranges
+                0x000000c0       0x20 clear_cache.arm9.o
+ .debug_aranges
+                0x000000e0       0x20 clear_mem.o
+ .debug_aranges
+                0x00000100       0x20 crt0.arm9.o
+ .debug_aranges
+                0x00000120       0x20 launch_ds_crt0.o
+ .debug_aranges
+                0x00000140       0x20 read_bios.o
+ .debug_aranges
+                0x00000160       0x20 reset.arm7.o
+ .debug_aranges
+                0x00000180       0x20 reset.arm9.o
+ .debug_aranges
+                0x000001a0       0x58 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+ .debug_aranges
+                0x000001f8       0xd8 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+
+.debug_pubnames
+ *(.debug_pubnames)
+
+.debug_info     0x00000000     0x2f11
+ *(.debug_info)
+ .debug_info    0x00000000      0x678 cheat.o
+ .debug_info    0x00000678      0x420 encryption.o
+ .debug_info    0x00000a98      0x9cb main.arm7.o
+ .debug_info    0x00001463      0x72d main.arm9.o
+ .debug_info    0x00001b90      0xd29 read_card.o
+ .debug_info    0x000028b9       0x25 cheat_engine.o
+ .debug_info    0x000028de       0x24 clear_cache.arm9.o
+ .debug_info    0x00002902       0x24 clear_mem.o
+ .debug_info    0x00002926       0x25 crt0.arm9.o
+ .debug_info    0x0000294b       0x25 launch_ds_crt0.o
+ .debug_info    0x00002970       0x24 read_bios.o
+ .debug_info    0x00002994       0x25 reset.arm7.o
+ .debug_info    0x000029b9       0x25 reset.arm9.o
+ .debug_info    0x000029de      0x510 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+ .debug_info    0x00002eee       0x23 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+
+.debug_abbrev   0x00000000      0xe0e
+ *(.debug_abbrev)
+ .debug_abbrev  0x00000000      0x1fd cheat.o
+ .debug_abbrev  0x000001fd      0x1b8 encryption.o
+ .debug_abbrev  0x000003b5      0x2b6 main.arm7.o
+ .debug_abbrev  0x0000066b      0x26d main.arm9.o
+ .debug_abbrev  0x000008d8      0x311 read_card.o
+ .debug_abbrev  0x00000be9       0x14 cheat_engine.o
+ .debug_abbrev  0x00000bfd       0x14 clear_cache.arm9.o
+ .debug_abbrev  0x00000c11       0x14 clear_mem.o
+ .debug_abbrev  0x00000c25       0x14 crt0.arm9.o
+ .debug_abbrev  0x00000c39       0x14 launch_ds_crt0.o
+ .debug_abbrev  0x00000c4d       0x14 read_bios.o
+ .debug_abbrev  0x00000c61       0x14 reset.arm7.o
+ .debug_abbrev  0x00000c75       0x14 reset.arm9.o
+ .debug_abbrev  0x00000c89      0x173 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+ .debug_abbrev  0x00000dfc       0x12 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+
+.debug_line     0x00000000     0x2834
+ *(.debug_line)
+ .debug_line    0x00000000      0x342 cheat.o
+ .debug_line    0x00000342      0x425 encryption.o
+ .debug_line    0x00000767      0x673 main.arm7.o
+ .debug_line    0x00000dda      0x78a main.arm9.o
+ .debug_line    0x00001564      0x84e read_card.o
+ .debug_line    0x00001db2      0x140 cheat_engine.o
+ .debug_line    0x00001ef2       0x57 clear_cache.arm9.o
+ .debug_line    0x00001f49       0x57 clear_mem.o
+ .debug_line    0x00001fa0       0x6f crt0.arm9.o
+ .debug_line    0x0000200f       0x8d launch_ds_crt0.o
+ .debug_line    0x0000209c       0x5e read_bios.o
+ .debug_line    0x000020fa       0x74 reset.arm7.o
+ .debug_line    0x0000216e       0x8a reset.arm9.o
+ .debug_line    0x000021f8      0x469 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+ .debug_line    0x00002661      0x1d3 C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+
+.debug_frame    0x00000000      0x3a8
+ *(.debug_frame)
+ .debug_frame   0x00000000       0x48 cheat.o
+ .debug_frame   0x00000048       0xd4 encryption.o
+ .debug_frame   0x0000011c       0xa4 main.arm7.o
+ .debug_frame   0x000001c0       0x38 main.arm9.o
+ .debug_frame   0x000001f8       0xbc read_card.o
+ .debug_frame   0x000002b4       0xf4 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+
+.debug_str      0x00000000     0x10b4
+ *(.debug_str)
+ .debug_str     0x00000000     0x10b4 cheat.o
+                                0x5ac (size before relaxing)
+ .debug_str     0x000010b4      0x230 encryption.o
+ .debug_str     0x000010b4      0x704 main.arm7.o
+ .debug_str     0x000010b4      0x598 main.arm9.o
+ .debug_str     0x000010b4      0x637 read_card.o
+ .debug_str     0x000010b4       0x78 cheat_engine.o
+ .debug_str     0x000010b4       0x7c clear_cache.arm9.o
+ .debug_str     0x000010b4       0x75 clear_mem.o
+ .debug_str     0x000010b4       0x75 crt0.arm9.o
+ .debug_str     0x000010b4       0x7a launch_ds_crt0.o
+ .debug_str     0x000010b4       0x75 read_bios.o
+ .debug_str     0x000010b4       0x76 reset.arm7.o
+ .debug_str     0x000010b4       0x76 reset.arm9.o
+ .debug_str     0x000010b4      0x32c C:/devkitPro/libnds/lib\libnds7.a(card.o)
+ .debug_str     0x000010b4       0xcb C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+
+.debug_loc
+ *(.debug_loc)
+
+.debug_macinfo
+ *(.debug_macinfo)
+
+.debug_weaknames
+ *(.debug_weaknames)
+
+.debug_funcnames
+ *(.debug_funcnames)
+
+.debug_typenames
+ *(.debug_typenames)
+
+.debug_varnames
+ *(.debug_varnames)
+
+.stack          0x00080000        0x0
+                0x00080000                        _stack = .
+ *(.stack)
+OUTPUT(R:/nitrohax-usercheat-slot2/BootLoader/build/load.arm7.elf elf32-littlearm)
+LOAD linker stubs
+
+.debug_loclists
+                0x00000000      0xf62
+ .debug_loclists
+                0x00000000      0x2ed cheat.o
+ .debug_loclists
+                0x000002ed      0x2c5 encryption.o
+ .debug_loclists
+                0x000005b2      0x181 main.arm7.o
+ .debug_loclists
+                0x00000733      0x1a9 main.arm9.o
+ .debug_loclists
+                0x000008dc      0x3e9 read_card.o
+ .debug_loclists
+                0x00000cc5      0x29d C:/devkitPro/libnds/lib\libnds7.a(card.o)
+
+.debug_rnglists
+                0x00000000      0x230
+ .debug_rnglists
+                0x00000000       0x17 cheat.o
+ .debug_rnglists
+                0x00000017       0x4e main.arm7.o
+ .debug_rnglists
+                0x00000065       0x61 main.arm9.o
+ .debug_rnglists
+                0x000000c6       0x84 read_card.o
+ .debug_rnglists
+                0x0000014a       0x49 C:/devkitPro/libnds/lib\libnds7.a(card.o)
+ .debug_rnglists
+                0x00000193       0x9d C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)
+
+.debug_line_str
+                0x00000000      0x189
+ .debug_line_str
+                0x00000000      0x189 cheat_engine.o
+                                 0x6a (size before relaxing)
+ .debug_line_str
+                0x00000189       0x6e clear_cache.arm9.o
+ .debug_line_str
+                0x00000189       0x67 clear_mem.o
+ .debug_line_str
+                0x00000189       0x67 crt0.arm9.o
+ .debug_line_str
+                0x00000189       0x6c launch_ds_crt0.o
+ .debug_line_str
+                0x00000189       0x67 read_bios.o
+ .debug_line_str
+                0x00000189       0x68 reset.arm7.o
+ .debug_line_str
+                0x00000189       0x68 reset.arm9.o
+ .debug_line_str
+                0x00000189       0xbd C:/devkitPro/libnds/lib\libnds7.a(biosCalls.o)

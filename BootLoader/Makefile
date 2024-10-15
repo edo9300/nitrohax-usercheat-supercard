@@ -12,29 +12,30 @@ endif
 # SOURCES is a list of directories containing source code
 # INCLUDES is a list of directories containing extra header files
 #---------------------------------------------------------------------------------
-export TARGET		:= load
+UNIVERSAL	:=	../../universal
+TARGET		:=	load
 BUILD		:=	build
-SOURCES		:=	source source/patches 
-INCLUDES	:=	build
+SOURCES		:=	source
+INCLUDES	:=	build source $(UNIVERSAL)/include
+DATA		:=	../data
 SPECS		:=  specs
  
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-mthumb-interwork -march=armv4t -mtune=arm7tdmi
+ARCH	:=	-mthumb-interwork -march=armv4t
 
 CFLAGS	:=	-g -Wall -O2\
-			-fomit-frame-pointer\
+			-mcpu=arm7tdmi -mtune=arm7tdmi -fomit-frame-pointer\
 			-ffast-math \
-			-Wall -Wextra -Werror \
 			$(ARCH)
 
-CFLAGS	+=	$(INCLUDE) -DARM7
+CFLAGS	+=	$(INCLUDE) -DARM7 -std=gnu99
 
 ASFLAGS	:=	-g $(ARCH) $(INCLUDE)
-LDFLAGS	:=	-nostartfiles -T$(CURDIR)/../load.ld -g $(ARCH) -Wl,-Map,$(TARGET).map
+LDFLAGS	=	-nostartfiles -T $(TOPDIR)/load.ld -g $(ARCH) -Wl,--nmagic -Wl,-Map,$(TARGET).map
 
-LIBS	:= -lnds7
+LIBS	:=	-lnds7
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
@@ -49,9 +50,10 @@ LIBDIRS	:=	$(LIBNDS)
 #---------------------------------------------------------------------------------
 ifneq ($(BUILD),$(notdir $(CURDIR)))
 #---------------------------------------------------------------------------------
- 
-export TARGETBIN	:=	$(CURDIR)/$(TARGET).bin
-export ARM7ELF	:=	$(CURDIR)/$(BUILD)/$(TARGET).arm7.elf
+
+export TOPDIR	:=	$(CURDIR)
+export LOADBIN	:=	$(CURDIR)/$(TARGET).bin
+export LOADELF	:=	$(CURDIR)/$(TARGET).elf
 export DEPSDIR	:=	$(CURDIR)/$(BUILD)
 
 export VPATH	:=	$(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
@@ -64,8 +66,9 @@ export OBJCOPY	:=	$(PREFIX)objcopy
 CFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 CPPFILES	:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.cpp)))
 SFILES		:=	$(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.s)))
- 
-export OFILES	:=	$(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
+# BINFILES	:=	cardengine_arm7.bin
+
+export OFILES	:=	$(addsuffix .o,$(BINFILES)) $(CPPFILES:.cpp=.o) $(CFILES:.c=.o) $(SFILES:.s=.o)
  
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 					$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
@@ -84,12 +87,12 @@ export LD	:=	$(CC)
 #---------------------------------------------------------------------------------
 $(BUILD):
 	@[ -d $@ ] || mkdir -p $@
-	@make --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
+	@$(MAKE) -C $(BUILD) -f $(CURDIR)/Makefile 
  
 #---------------------------------------------------------------------------------
 clean:
 	@echo clean ...
-	@rm -fr $(BUILD) *.elf load.bin
+	@rm -fr $(BUILD) *.elf
  
  
 #---------------------------------------------------------------------------------
@@ -100,19 +103,30 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #---------------------------------------------------------------------------------
 # main targets
 #---------------------------------------------------------------------------------
-
-$(TARGETBIN)	:	$(ARM7ELF)
+$(LOADBIN)	:	$(LOADELF)
 	@$(OBJCOPY) -O binary $< $@
 	@echo built ... $(notdir $@)
 
 
-$(ARM7ELF)	:	$(OFILES)
+$(LOADELF)	:	$(OFILES)
 	@echo linking $(notdir $@)
 	@$(LD)  $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
  
 
+# cardengine_arm7.bin.o : cardengine_arm7.bin
+
+# cardengine_arm7.bin:
+	# @cp $(CURDIR)/../../data/cardengine_arm7.bin cardengine_arm7.bin
+
+-include $(DEPENDS)
 
  
+#---------------------------------------------------------------------------------
+%.bin.o	:	%.bin
+#---------------------------------------------------------------------------------
+	@echo $(notdir $<)
+	$(bin2o)
+	
 #---------------------------------------------------------------------------------------
 endif
 #---------------------------------------------------------------------------------------
