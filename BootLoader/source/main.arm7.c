@@ -54,10 +54,10 @@
 #include "find.h"
 
 
-extern unsigned long cheat_engine_size;
-extern unsigned long intr_orig_return_offset;
+// extern unsigned long intr_orig_return_offset;
 
-extern const u8 cheat_engine_start[]; 
+// extern unsigned long cheat_engine_size;
+// extern const u8 cheat_engine_start[]; 
 extern u32 language;
 extern u32 sdAccess;
 extern u32 scfgUnlock;
@@ -583,7 +583,6 @@ void arm7_main (void) {
 
 	if (runCardEngine) {
 
-		copyLoop ((u32*)ENGINE_LOCATION_ARM7, (u32*)cheat_engine_start, cheat_engine_size);
 		errorCode = hookNdsRetail(ndsHeader, (const u32*)CHEAT_DATA_LOCATION, (u32*)ENGINE_LOCATION_ARM7);
 		if (errorCode == ERR_NONE) {
 			nocashMessage("card hook Sucessfull\n");
@@ -591,18 +590,6 @@ void arm7_main (void) {
 			nocashMessage("error during card hook\n");
 			debugOutput(errorCode);
 		}
-		// if (*(u32*)(0x023F0000) != 0xCF000000) {
-			// nocashMessage("cheat data found\n");
-			// u32* cheatDataOffset = findOffset(
-				// (u32*)ENGINE_LOCATION_ARM7, cheat_engine_size,
-				// cheatDataEndSignature, 2
-			// );
-			// if (cheatDataOffset) {
-				// tonccpy (cheatDataOffset, (u32*)0x023F0000, 0x8000);	// Copy cheat data
-			// }
-		// } else {			
-			// nocashMessage("no cheat data found\n");
-		// }
 	}
 	toncset ((void*)0x023F0000, 0, 0x8000);		// Clear cheat data from main memory
 

@@ -27,6 +27,8 @@ extern bool gameSoftReset;
 
 extern unsigned long cheat_engine_size;
 extern unsigned long intr_orig_return_offset;
+extern const u8 cheat_engine_start[]; 
+
 #define CHEAT_CODE_END	0xCF000000
 #define CHEAT_ENGINE_RELOCATE	0xCF000001
 #define CHEAT_ENGINE_HOOK	0xCF000002
@@ -203,19 +205,10 @@ int hookNdsRetail (const tNDSHeader* ndsHeader, const u32* cheatData, u32* cardE
 	}
 
 	oldReturn = *hookLocation;
-	*(u32*)0x2000000 = (u32)cardEngineLocation;
-	*(u32*)0x2000004 = (u32)hookLocation;
-	// while(1);
 	*hookLocation = (u32)cardEngineLocation;
-	// u32* vblankHandler = hookLocation;
 
-	// cardEngineLocation[1] = *vblankHandler;
-	// cardEngineLocation[2] = language;
-	// cardEngineLocation[3] = gameSoftReset;
-
-	// u32* patches =  (u32*) cardEngineLocation[0];
-
-	// *vblankHandler = (u32*)cardEngineLocation;
+	copyLoop ((u32*)cardEngineLocation, (u32*)cheat_engine_start, cheat_engine_size);
+	
 	cardEngineLocation[intr_orig_return_offset/sizeof(u32)] = oldReturn;
 	
 	u32* cheatDest = cardEngineLocation + (cheat_engine_size/sizeof(u32));
@@ -225,10 +218,6 @@ int hookNdsRetail (const tNDSHeader* ndsHeader, const u32* cheatData, u32* cardE
 		*cheatDest++ = cheatWord1;
 		*cheatDest++ = cheatWord2;
 	} while (cheatWord1 != CHEAT_CODE_END);
-	// *(u32*)0x2000000 = (unsigned)hookLocation;
-	// *(u32*)0x2000004 = (unsigned)cardEngineLocation;
-	// nocashMessage("waiting\n");
-	// while(1);
 
 	nocashMessage("ERR_NONE\n");
 	return ERR_NONE;
