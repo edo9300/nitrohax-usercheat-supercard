@@ -19,6 +19,7 @@
 #include <string.h>
 #include <nds.h>
 
+#include "sc_mode.h"
 #include "load_bin.h"
 #include "cheat_engine.h"
 #include "common/tonccpy.h"
@@ -48,19 +49,9 @@
 #define CHEAT_CODE_END	0xCF000000
 #define CHEAT_DATA_LOCATION  	((u32*)0x09000000) //use upper 16 mb of the supercard's ram
 
-
-#define SC_MODE_RAM 0x5
-void _SC_changeMode(u8 mode) {
-	vu16 *unlockAddress = (vu16*)0x09FFFFFE;
-	*unlockAddress = 0xA55A;
-	*unlockAddress = 0xA55A;
-	*unlockAddress = mode;
-	*unlockAddress = mode;
-}
-
 void runCheatEngine (void* cheats, int cheatLength)
 {
-	_SC_changeMode(SC_MODE_RAM);	// Try again with SuperCard
+	SC_changeMode(SC_MODE_RAM);
 	nocashMessage("runLaunchEngine\n");
 
 	irqDisable(IRQ_ALL);

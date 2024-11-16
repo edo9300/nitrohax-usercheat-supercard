@@ -23,6 +23,8 @@
 #include <malloc.h>
 #include <list>
 
+#include "sc_mode.h"
+#include "common/tonccpy.h"
 #include "cheat.h"
 #include "ui.h"
 #include "cheat_engine.h"
@@ -47,6 +49,13 @@ static inline void ensure (bool condition, const char* errorMsg) {
 	return;
 }
 
+static void restore_secure_area_from_sdram() {
+	SC_changeMode(SC_MODE_RAM);
+	volatile uint32_t* firmwareSecureArea = (vu32*)0x02000000;
+	tonccpy(__NDSHeader, (uint8_t*)GBA_BUS, 0x200);
+	tonccpy((void*)firmwareSecureArea, ((uint8_t*)GBA_BUS) + 0x200, 0x4000);
+}
+
 //---------------------------------------------------------------------------------
 int main(int argc, const char* argv[])
 {
@@ -67,13 +76,12 @@ int main(int argc, const char* argv[])
 #endif
 
 	sysSetCardOwner (BUS_OWNER_ARM9);
+	sysSetCartOwner (BUS_OWNER_ARM9);
 	
 	// reuse ds header parsed by the ds firmware and then altered by flashme
 	auto& ndsHeader = *((struct ndsHeader*)__NDSHeader);
+	restore_secure_area_from_sdram();
 
-	memcpy(((char*)&ndsHeader) + 0x80, ((char*)&ndsHeader) + 0x94, 8);
-	memset(((char*)&ndsHeader) + 0x94, 0, 8);
-	
 	//arm9executeAddress and cardControl13 are altered by flashme and become unrecoverable
 	//use some heuristics to try to guess them back and check for the header crc to match
 	ndsHeader.header.arm9executeAddress = ((char*)ndsHeader.header.arm9destination) + 0x800;
