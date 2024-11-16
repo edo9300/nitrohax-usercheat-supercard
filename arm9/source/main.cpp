@@ -48,12 +48,20 @@ static inline void ensure (bool condition, const char* errorMsg) {
 
 	return;
 }
+struct SUPERCARD_RAM_DATA {
+	ndsHeader header;
+	uint8_t secure_area[0x4000];
+	uint32_t chipid;
+};
+#define CHIPID (*((volatile uint32_t*)0x027FF800))
 
 static void restore_secure_area_from_sdram() {
 	SC_changeMode(SC_MODE_RAM);
 	volatile uint32_t* firmwareSecureArea = (vu32*)0x02000000;
-	tonccpy(__NDSHeader, (uint8_t*)GBA_BUS, 0x200);
-	tonccpy((void*)firmwareSecureArea, ((uint8_t*)GBA_BUS) + 0x200, 0x4000);
+	auto& ram_data = *((SUPERCARD_RAM_DATA*)GBA_BUS);
+	tonccpy(__NDSHeader, &ram_data.header, 0x200);
+	tonccpy((void*)firmwareSecureArea, ram_data.secure_area, 0x4000);
+	CHIPID = ram_data.chipid;
 }
 
 //---------------------------------------------------------------------------------
