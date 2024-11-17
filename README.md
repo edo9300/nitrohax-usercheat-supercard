@@ -1,47 +1,54 @@
-Nitro Hax
+Nitro Hax SuperCard edition
 =========
 
 By Chishm
 
-Nitro Hax is a cheat tool for the Nintendo DS. 
-It works with original games only.
+Modified to use a usrcheat.dat database by Pk11
 
-The newest release is available to
-[download](https://www.chishm.com/NitroHax/NitroHax.zip) from the
-[Nitro Hax web page](https://www.chishm.com/NitroHax/index.html).
+Modified to use the SuperCard's ram to run the cheat engine
+and to support booting DSi Enhanced games (by using twilightmenu bootloader)
+by edo9300
+
+Nitro Hax is a cheat tool for the Nintendo DS. 
+It works with original games only. This specific build of Nitro Hax is designed to work
+**exclusively** with SLOT-2 SuperCard flashcarts, as it uses their memory expansion support
+to have 32mb of space to place the cheat engine in, without having to worry about finding
+the space in the ram used by a game.  
+Paired with [SCSFW](https://github.com/edo9300/SCSFW), it supports booting carts directly
+without having to hot swap them
 
 Usage
 =====
 
-1. Patch NitroHax.nds with a DLDI file if you need to.
-2. Copy the NitroHax.nds file to your media device.
-3. Place an Action Replay XML file on your media device.
-4. Start NitroHax.nds from your media device
-   1. One of the following will be loaded automatically if it is found (in order
-   of preference):
-      * "cheats.xml" in the current directory
-      * "/NitroHax/cheats.xml"
-      * "/data/NitroHax/cheats.xml"
-      * "/cheats.xml"
+1. Copy NitroHax.nds to your sd card.
+2. Place a usrcheat.dat file on your SD card.
+3. Start NitroHax.nds. If not booted via SCSFW, or no game was recognized, the program will prompt you to insert one.
+   1. One of the following will be loaded automatically if it is found (in order of preference):
+      * `usrcheat.dat` (in the current directory)
+      * `/DS/NitroHax/usrcheat.dat`
+      * `/NitroHax/usrcheat.dat`
+      * `/data/NitroHax/usrcheat.dat`
+      * `/usrcheat.dat`
+      * `/_nds/usrcheat.dat`
+      * `/_nds/TWiLightMenu/extras/usrcheat.dat` (this is the same place TWiLight Menu++ uses)
    2. If no file is found, browse for and select a file to open.
-5. Remove your media device if you want to.
-6. Remove any card that is in Slot-1
-7. Insert the DS game into Slot-1
-8. Choose the cheats you want to enable.
+4. Choose the cheats you want to enable.
    1. Some cheats are enabled by default and others may be always on. This is
    specified in the XML file.
    2. The keys are:
-      * **A**: Open a folder or toggle a cheat enabled
-      * **B**: Go up a folder or exit the cheat menu if at the top level
-      * **X**: Enable all cheats in current folder
-      * **Y**: Disable all cheats in current folder
-      * **L**: Move up half a screen
-      * **R**: Move down half a screen
-      * **Up**: Move up one line
-      * **Down**: Move down one line
-      * **Start**: Start the game
-9. When you are done, exit the cheat menu.
-10. The game will then start with cheats running.
+      * <kbd>A</kbd>: Open a folder or toggle a cheat enabled
+      * <kbd>B</kbd>: Go up a folder or exit the cheat menu if at the top level
+      * <kbd>X</kbd>: Enable all cheats in current folder
+      * <kbd>Y</kbd>: Disable all cheats in current folder
+      * <kbd>L</kbd>: Move up half a screen
+      * <kbd>R</kbd>: Move down half a screen
+      * <kbd>Up</kbd>: Move up one line
+      * <kbd>Down</kbd>: Move down one line
+      * <kbd>START</kbd>: Start the game
+6. Do NOT eject the game cartridge once cheats have been loaded. If you change your mind, you will need to restart NitroHax.
+8. When you're done, exit the cheat menu by pressing the <kbd>START</kbd> button.
+9. The game will then start with cheats running.
+10. Do NOT remove the SuperCard from the SLOT-2, as code is being executed from there.
 
 
 Copyright
