@@ -36,7 +36,7 @@ sNDSHeader header;
 char padding[0x200 - sizeof(sNDSHeader)];
 };
 
-const char TITLE_STRING[] = "Nitro Hax " VERSION_STRING "\nWritten by Chishm";
+const char TITLE_STRING[] = "Nitro Hax Supercard " VERSION_STRING "\nWritten by Chishm\nModified by edo9300";
 const char* defaultFiles[] = {"usrcheat.dat", "/DS/NitroHax/usrcheat.dat", "/NitroHax/usrcheat.dat", "/data/NitroHax/usrcheat.dat", "/usrcheat.dat", "/_nds/usrcheat.dat", "/_nds/TWiLightMenu/extras/usrcheat.dat"};
 
 
@@ -49,19 +49,36 @@ static inline void ensure (bool condition, const char* errorMsg) {
 	return;
 }
 struct SUPERCARD_RAM_DATA {
+	uint8_t magicString[8];
 	ndsHeader header;
 	uint8_t secure_area[0x4000];
 	uint32_t chipid;
 };
-#define CHIPID (*((volatile uint32_t*)0x027FF800))
+#define CHIPID ((volatile uint32_t*)0x027FF800)
+#define FIRMWARE_SECURE_AREA ((volatile uint32_t*)0x02000000)
 
-static void restore_secure_area_from_sdram() {
+static bool restore_secure_area_from_sdram() {
+	uint8_t magicString[8] = {'S', 'C', 'S', 'F', 'W', 0, 0, 0};
 	SC_changeMode(SC_MODE_RAM);
-	volatile uint32_t* firmwareSecureArea = (vu32*)0x02000000;
 	auto& ram_data = *((SUPERCARD_RAM_DATA*)GBA_BUS);
+	if(memcmp(ram_data.magicString, magicString, 8) != 0)
+		return false;
+	volatile uint32_t* firmwareSecureArea = FIRMWARE_SECURE_AREA;
 	tonccpy(__NDSHeader, &ram_data.header, 0x200);
 	tonccpy((void*)firmwareSecureArea, ram_data.secure_area, 0x4000);
-	CHIPID = ram_data.chipid;
+	*CHIPID = ram_data.chipid;
+	return true;
+}
+
+static void getHeader (u32* ndsHeader) {
+	cardParamCommand (CARD_CMD_DUMMY, 0, 
+		CARD_ACTIVATE | CARD_CLK_SLOW | CARD_BLK_SIZE(1) | CARD_DELAY1(0x1FFF) | CARD_DELAY2(0x3F), 
+		NULL, 0);
+
+	cardParamCommand(CARD_CMD_HEADER_READ, 0,
+		CARD_ACTIVATE | CARD_nRESET | CARD_CLK_SLOW | CARD_BLK_SIZE(1) | CARD_DELAY1(0x1FFF) | CARD_DELAY2(0x3F),
+		ndsHeader, 512);
+
 }
 
 //---------------------------------------------------------------------------------
@@ -88,22 +105,39 @@ int main(int argc, const char* argv[])
 	
 	// reuse ds header parsed by the ds firmware and then altered by flashme
 	auto& ndsHeader = *((struct ndsHeader*)__NDSHeader);
-	restore_secure_area_from_sdram();
-
-	//arm9executeAddress and cardControl13 are altered by flashme and become unrecoverable
-	//use some heuristics to try to guess them back and check for the header crc to match
-	ndsHeader.header.arm9executeAddress = ((char*)ndsHeader.header.arm9destination) + 0x800;
 	bool crc_matched = false;
-	for(auto control : {0x00416657, 0x00586000, 0x00416017}) {
-		ndsHeader.header.cardControl13 = control;
-		if(crc_matched = ndsHeader.header.headerCRC16 == swiCRC16(0xFFFF, (void*)&ndsHeader, 0x15E); crc_matched) {
-			break;
+	if(restore_secure_area_from_sdram()) {
+		//arm9executeAddress and cardControl13 are altered by flashme and become unrecoverable
+		//use some heuristics to try to guess them back and check for the header crc to match
+		ndsHeader.header.arm9executeAddress = ((char*)ndsHeader.header.arm9destination) + 0x800;
+		for(auto control : {0x00416657, 0x00586000, 0x00416017}) {
+			ndsHeader.header.cardControl13 = control;
+			if(crc_matched = ndsHeader.header.headerCRC16 == swiCRC16(0xFFFF, (void*)&ndsHeader, 0x15E); crc_matched) {
+				break;
+			}
 		}
 	}
-	ensure(crc_matched, "Header crc didn't match\nRestart!");
-	
-	ensure (fatInitDefault(), "FAT init failed");
+	if(!crc_matched) {
+		ui.showMessage ("Header crc didn't match\nRemove your DS Card");
+		do {
+			swiWaitForVBlank();
+			getHeader ((uint32_t*)&ndsHeader);
+		} while (*((uint32_t*)&ndsHeader) != 0xffffffff);
 
+		ui.showMessage ("Insert Game");
+		do {
+			swiWaitForVBlank();
+			getHeader ((uint32_t*)&ndsHeader);
+		} while (*((uint32_t*)&ndsHeader) == 0xffffffff);
+		sysSetCardOwner(BUS_OWNER_ARM7);
+		fifoSendValue32(FIFO_USER_01, 1);
+		fifoWaitValue32(FIFO_USER_02);
+		*CHIPID = fifoGetValue32(FIFO_USER_02);
+		sysSetCardOwner(BUS_OWNER_ARM9);
+	}
+
+	ensure (fatInitDefault(), "FAT init failed");
+	
 	// Read cheat file
 	for (u32 i = 0; i < sizeof(defaultFiles)/sizeof(const char*); i++) {
 		cheatFile = fopen (defaultFiles[i], "rb");

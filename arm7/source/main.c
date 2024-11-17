@@ -20,7 +20,10 @@
 #include <nds/arm7/input.h>
 #include <nds/system.h>
 
+static tNDSHeader dummy;
+
 #include "cheat_engine_arm7.h"
+#include "card/read_card.h"
 
 
 void VcountHandler() {
@@ -54,6 +57,12 @@ int main(void) {
 
 	// Keep the ARM7 mostly idle
 	while (1) {
+		if(fifoCheckValue32(FIFO_USER_01)) {
+			(void)fifoGetValue32(FIFO_USER_01);
+			u32 chipid;
+			cardInit((tNDSHeader*)&dummy, (void*)0x02000000, &chipid);
+			fifoSendValue32(FIFO_USER_02, chipid);
+		}
 		runCheatEngineCheck();
 		swiWaitForVBlank();
 	}
