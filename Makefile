@@ -30,7 +30,7 @@ checkarm7:
 checkarm9:
 	$(MAKE) -C arm9
 
-$(TARGET).nds	:	arm7/$(TARGET).elf arm9/$(TARGET).elf
+$(TARGET).nds	:	arm7/$(TARGET).elf arm9/$(TARGET).elf checkarm7 checkarm9
 	ndstool	-c $(TARGET).nds -7 arm7/$(TARGET).elf -9 arm9/$(TARGET).elf \
 			-b $(CURDIR)/icon.bmp "Nitro Hax;DS Game Cheat Tool;Created by Chishm"
 
