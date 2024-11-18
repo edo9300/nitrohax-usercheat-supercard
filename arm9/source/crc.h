@@ -27,6 +27,7 @@ extern "C" {
 #include <unistd.h>
 
 uint32_t crc32(const char *buf, size_t size);
+uint32_t crc32Partial(const char *buf, size_t size, uint32_t crc);
 
 #ifdef __cplusplus
 }

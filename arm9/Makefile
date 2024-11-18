@@ -32,7 +32,7 @@ CFLAGS	:=	-g -Wall -O2\
 			$(ARCH)
 
 CFLAGS	+=	$(INCLUDE) -DARM9
-CXXFLAGS	:=	$(CFLAGS)
+CXXFLAGS	:=	$(CFLAGS) -std=gnu++20
 
 ASFLAGS	:=	-g $(ARCH) $(INCLUDE)
 

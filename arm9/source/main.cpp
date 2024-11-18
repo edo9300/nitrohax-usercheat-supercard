@@ -88,7 +88,6 @@ int main(int argc, const char* argv[])
     (void)argv;
 
 	u32 gameid;
-	uint32_t headerCRC;
 	std::string filename;
 	FILE* cheatFile;
 	bool doFilter=false;
@@ -105,6 +104,7 @@ int main(int argc, const char* argv[])
 	
 	// reuse ds header parsed by the ds firmware and then altered by flashme
 	auto& ndsHeader = *((struct ndsHeader*)__NDSHeader);
+	uint32_t guessedCrc32[3]{};
 	bool crc_matched = false;
 	if(restore_secure_area_from_sdram()) {
 		//arm9executeAddress and cardControl13 are altered by flashme and become unrecoverable
@@ -116,6 +116,20 @@ int main(int argc, const char* argv[])
 				break;
 			}
 		}
+		if(crc_matched) {
+			char extraBuffer[0xA0]{};
+			// non dsi enhanced games produced after the dsi was released, have
+			// this extra byte possibly set in their header, try to do another
+			// guessing round
+			// 1BFh 1    Flags (40h=RSA+TwoHMACs, 60h=RSA+ThreeHMACs)
+			auto partialHeaderCRC = crc32((const char*)&ndsHeader, 0x160);
+			guessedCrc32[0] = crc32Partial(extraBuffer, 0xA0, partialHeaderCRC);
+			extraBuffer[0x1BF - 0x160] = 0x40;
+			guessedCrc32[1] = crc32Partial(extraBuffer, 0xA0, partialHeaderCRC);
+			extraBuffer[0x1BF - 0x160] = 0x60;
+			guessedCrc32[2] = crc32Partial(extraBuffer, 0xA0, partialHeaderCRC);
+		}
+		
 	}
 	if(!crc_matched) {
 		ui.showMessage ("Header crc didn't match\nRemove your DS Card");
@@ -134,6 +148,8 @@ int main(int argc, const char* argv[])
 		fifoWaitValue32(FIFO_USER_02);
 		*CHIPID = fifoGetValue32(FIFO_USER_02);
 		sysSetCardOwner(BUS_OWNER_ARM9);
+		// not really guessed, we know it's the right one
+		guessedCrc32[0] = crc32((const char*)&ndsHeader, sizeof(ndsHeader));
 	}
 
 	ensure (fatInitDefault(), "FAT init failed");
@@ -154,12 +170,11 @@ int main(int argc, const char* argv[])
 	ui.showMessage (UserInterface::TEXT_TITLE, TITLE_STRING);
 
 	gameid = ((int*)&ndsHeader)[3];
-	headerCRC = crc32((const char*)&ndsHeader, sizeof(ndsHeader));
-
+	
 	ui.showMessage ("Loading codes");
 
 	CheatCodelist* codelist = new CheatCodelist();
-	if(!codelist->load(cheatFile, gameid, headerCRC, doFilter)) {
+	if(!codelist->load(cheatFile, gameid, guessedCrc32, doFilter)) {
 		union {
 			uint32_t bbb;
 			struct {
@@ -169,12 +184,15 @@ int main(int argc, const char* argv[])
 				char d;
 			};
 		} converter{gameid};
-		ui.showMessage ("Can't read cheat list for game id: %c%c%c%c, header CRC: 0x%X\n", converter.a, converter.b, converter.c, converter.d, headerCRC);
+		ui.showMessage ("Can't read cheat list for game id: %c%c%c%c, header CRC: 0x%X\n", converter.a, converter.b, converter.c, converter.d, guessedCrc32[0]);
 		while(1) swiWaitForVBlank();
 	}
 	// ensure (codelist->load(cheatFile, gameid, headerCRC, doFilter), "Can't read cheat list\n");
 	fclose (cheatFile);
-	CheatFolder *gameCodes = codelist->getGame (gameid, headerCRC);
+	CheatFolder *gameCodes = nullptr;
+	if(guessedCrc32[1] == 0 && guessedCrc32[2] == 0) {
+		gameCodes = codelist->getGame(gameid, guessedCrc32[0]);
+	}	
 
 	if (!gameCodes) {
 		gameCodes = codelist;
@@ -190,7 +208,7 @@ int main(int argc, const char* argv[])
 
 		CheatCodelist* codelist = new CheatCodelist();
 		// ensure (codelist->load(cheatFile, gameid, headerCRC, doFilter), "Can't read cheat list\n");
-		if(!codelist->load(cheatFile, gameid, headerCRC, doFilter)) {
+		if(!codelist->load(cheatFile, gameid, guessedCrc32, doFilter)) {
 			union {
 				uint32_t bbb;
 				struct {
@@ -200,11 +218,13 @@ int main(int argc, const char* argv[])
 					char d;
 				};
 			} converter{gameid};
-			ui.showMessage ("Can't read cheat list for game id: %c%c%c%c, header CRC: 0x%X\n", converter.a, converter.b, converter.c, converter.d, headerCRC);
+			ui.showMessage ("Can't read cheat list for game id: %c%c%c%c, header CRC: 0x%X\n", converter.a, converter.b, converter.c, converter.d, guessedCrc32[0]);
 			while(1) swiWaitForVBlank();
 		}
 		fclose (cheatFile);
-		gameCodes = codelist->getGame (gameid, headerCRC);
+		if(guessedCrc32[1] == 0 && guessedCrc32[2] == 0) {
+			gameCodes = codelist->getGame(gameid, guessedCrc32[0]);
+		}	
 
 		if (!gameCodes) {
 			gameCodes = codelist;

@@ -19,6 +19,7 @@
 #include "cheat.h"
 #include <stdio.h>
 #include <iterator>
+#include <algorithm>
 
 #include "ui.h"
 
@@ -167,15 +168,18 @@ CheatCodelist::~CheatCodelist(void)
 	}
 }
 
-bool CheatCodelist::searchCheatData(FILE* aDat, uint32_t gamecode, uint32_t crc32, long& aPos, size_t& aSize)
+struct CheatEntry {
+	long offset;
+	long size;
+	uint32_t crc32;
+};
+
+auto CheatCodelist::searchCheatData(FILE* aDat, uint32_t gamecode) -> std::vector<CheatEntry>
 {
-	(void)crc32;
-	aPos=0;
-	aSize=0;
 	const char* KHeader="R4 CheatCode";
 	char header[12];
 	fread(header,12,1,aDat);
-	if(strncmp(KHeader,header,12)) return false;
+	if(strncmp(KHeader,header,12) != 0) return {};
 
 	sDatIndex idx,nidx;
 
@@ -185,124 +189,137 @@ bool CheatCodelist::searchCheatData(FILE* aDat, uint32_t gamecode, uint32_t crc3
 	fseek(aDat,0x100,SEEK_SET);
 	fread(&nidx,sizeof(nidx),1,aDat);
 
-	bool done=false;
-
-	while(!done)
+	std::vector<CheatEntry> res;
+	while(nidx._offset != 0)
 	{
 		memcpy(&idx,&nidx,sizeof(idx));
 		fread(&nidx,sizeof(nidx),1,aDat);
-		if(gamecode==idx._gameCode/*&&crc32==idx._crc32*/)
+		if(gamecode==idx._gameCode)
 		{
-			aSize=((nidx._offset)?nidx._offset:fileSize)-idx._offset;
-			aPos=idx._offset;
-			done=true;
+			res.emplace_back(long(idx._offset),long(((nidx._offset)?nidx._offset:fileSize)-idx._offset), idx._crc32);
 		}
-		if(!nidx._offset) done=true;
 	}
 
-	return (aPos&&aSize);
+	return res;
 }
 
-bool CheatCodelist::load (FILE* fp, uint32_t gameid, uint32_t headerCRC, bool filter)
+bool CheatCodelist::load(FILE* fp, uint32_t gameid, uint32_t* headerCRCs, bool filter)
 {
 	(void)filter;
-	CheatBase* curItem = this;
-	CheatBase* newItem;
-	CheatCode* cheatCode;
-	CheatFolder* cheatFolder;
-	CheatGame* cheatGame;
 
-	long dataPos; size_t dataSize;
-	if(!searchCheatData(fp, gameid, headerCRC, dataPos, dataSize))
+	auto cheats = searchCheatData(fp, gameid);
+	if(cheats.empty())
 		return false;
-	fseek(fp, dataPos, SEEK_SET);
+	
+	if(auto found = std::find_if(cheats.begin(), cheats.end(), [&](const auto& cheatEntry){
+		auto crc32 = cheatEntry.crc32;
+		return crc32 == headerCRCs[0] || crc32 == headerCRCs[1] || crc32 == headerCRCs[2];
+	}); found != cheats.end()) {
+		headerCRCs[0] = found->crc32;
+		headerCRCs[1] = 0;
+		headerCRCs[2] = 0;
+		auto off = *found;
+		std::vector{off}.swap(cheats);
+	} else if(cheats.size() == 1) {
+		headerCRCs[0] = cheats.front().crc32;
+		headerCRCs[1] = 0;
+		headerCRCs[2] = 0;
+	}
+	
+	//we want an exact match, since in this case the header is 100% sure
+	if(cheats.size() > 1 && headerCRCs[1] != 0)
+		return false;
+	
+	for(const auto& [dataPos, dataSize, crc] : cheats) {
+		CheatBase* newItem;
+		fseek(fp, dataPos, SEEK_SET);		
+		std::vector<uint8_t> buffer;
+		buffer.resize(dataSize);
 
-	char* buffer = (char*)malloc(dataSize);
-	if(!buffer) return false;
-	fread(buffer, dataSize, 1, fp);
-	char* gameTitle = buffer;
+		fread(buffer.data(), dataSize, 1, fp);
+		// this is so much cursed, but there's not much that can be done with it unfortunately
+		char* gameTitle = (char*)buffer.data();
 
-	cheatGame = new CheatGame (this);
-	cheatGame->setGameid(gameid, headerCRC);
-	curItem = cheatGame;
-	curItem->name = gameTitle;
+		auto* cheatGame = new CheatGame (this);
+		cheatGame->setGameid(gameid, crc);
+		CheatBase* curItem = cheatGame;
+		curItem->name = gameTitle;
 
-	uint32_t* ccode = (uint32_t*)(((uint32_t)gameTitle + strlen(gameTitle) + 4) & ~3);
-	uint32_t cheatCount = *ccode;
-	cheatCount &= 0x0fffffff;
-	ccode += 9;
+		uint32_t* ccode = (uint32_t*)(((uint32_t)gameTitle + strlen(gameTitle) + 4) & ~3);
+		uint32_t cheatCount = *ccode;
+		cheatCount &= 0x0fffffff;
+		ccode += 9;
 
-	uint32_t cc = 0;
-	while(cc < cheatCount)
-	{
-		uint32_t folderCount = 1;
-		char* folderName = NULL;
-		char* folderNote = NULL;
-		bool oneOnly = false, inFolder = false;
-		if((*ccode >> 28) & 1)
+		uint32_t cc = 0;
+		while(cc < cheatCount)
 		{
-			inFolder = true;
-			cheatFolder = dynamic_cast<CheatFolder*>(curItem);
-			if (cheatFolder) {
-				newItem = new CheatFolder (cheatFolder);
-				cheatFolder->addItem (newItem);
-				curItem = newItem;
-			}
-			oneOnly = (*ccode >> 24) == 0x11;
-			dynamic_cast<CheatFolder*>(curItem)->setAllowOneOnly(oneOnly);
-			folderCount = *ccode & 0x00ffffff;
-			folderName = (char*)((u32)ccode + 4);
-			folderNote = (char*)((u32)folderName + strlen(folderName) + 1);
-			curItem->name = folderName;
-			curItem->note = folderNote;
-			cc++;
-			ccode = (uint32_t*)(((uint32_t)folderName+strlen(folderName)+1+strlen(folderNote)+1+3)&~3);
-		}
-
-		bool selectValue = true;
-		for(size_t ii=0; ii < folderCount; ++ii)
-		{
-			cheatFolder = dynamic_cast<CheatFolder*>(curItem);
-			if (cheatFolder) {
-				newItem = new CheatCode (cheatFolder);
-				cheatFolder->addItem (newItem);
-				curItem = newItem;
-			}
-			char* cheatName = (char*)((u32)ccode + 4);
-			char* cheatNote = (char*)((u32)cheatName + strlen(cheatName) + 1);
-			curItem->name = cheatName;
-			curItem->note = cheatNote;
-			CheatWord* cheatData = (CheatWord*)(((uint32_t)cheatNote+strlen(cheatNote)+1+3)&~3);
-			uint32_t cheatDataLen = *cheatData++;
-
-			if(cheatDataLen)
+			uint32_t folderCount = 1;
+			char* folderName = NULL;
+			char* folderNote = NULL;
+			bool oneOnly = false, inFolder = false;
+			if((*ccode >> 28) & 1)
 			{
-				cheatCode = dynamic_cast<CheatCode*>(curItem);
-				cheatCode->setCodeData (cheatData, cheatDataLen);
-				cheatCode->setEnabled (((*ccode & 0xff000000) ? selectValue : 0));
-				if((*ccode & 0xff000000) && oneOnly)
-					selectValue = false;
+				inFolder = true;
+				auto* cheatFolder = dynamic_cast<CheatFolder*>(curItem);
+				if (cheatFolder) {
+					newItem = new CheatFolder (cheatFolder);
+					cheatFolder->addItem (newItem);
+					curItem = newItem;
+				}
+				oneOnly = (*ccode >> 24) == 0x11;
+				dynamic_cast<CheatFolder*>(curItem)->setAllowOneOnly(oneOnly);
+				folderCount = *ccode & 0x00ffffff;
+				folderName = (char*)((u32)ccode + 4);
+				folderNote = (char*)((u32)folderName + strlen(folderName) + 1);
+				curItem->name = folderName;
+				curItem->note = folderNote;
+				cc++;
+				ccode = (uint32_t*)(((uint32_t)folderName+strlen(folderName)+1+strlen(folderNote)+1+3)&~3);
 			}
 
-			cc++;
-			ccode=(uint32_t*)((uint32_t)ccode+(((*ccode&0x00ffffff)+1)*4));
-			newItem = curItem->getParent();
-			if (newItem) {
-				curItem = newItem;
-			}
-		}
+			bool selectValue = true;
+			for(size_t ii=0; ii < folderCount; ++ii)
+			{
+				auto* cheatFolder = dynamic_cast<CheatFolder*>(curItem);
+				if (cheatFolder) {
+					newItem = new CheatCode (cheatFolder);
+					cheatFolder->addItem (newItem);
+					curItem = newItem;
+				}
+				char* cheatName = (char*)((u32)ccode + 4);
+				char* cheatNote = (char*)((u32)cheatName + strlen(cheatName) + 1);
+				curItem->name = cheatName;
+				curItem->note = cheatNote;
+				CheatWord* cheatData = (CheatWord*)(((uint32_t)cheatNote+strlen(cheatNote)+1+3)&~3);
+				uint32_t cheatDataLen = *cheatData++;
 
-		if(inFolder) {
-			newItem = curItem->getParent();
-			if (newItem) {
-				curItem = newItem;
+				if(cheatDataLen)
+				{
+					auto* cheatCode = dynamic_cast<CheatCode*>(curItem);
+					cheatCode->setCodeData (cheatData, cheatDataLen);
+					cheatCode->setEnabled (((*ccode & 0xff000000) ? selectValue : 0));
+					if((*ccode & 0xff000000) && oneOnly)
+						selectValue = false;
+				}
+
+				cc++;
+				ccode=(uint32_t*)((uint32_t)ccode+(((*ccode&0x00ffffff)+1)*4));
+				newItem = curItem->getParent();
+				if (newItem) {
+					curItem = newItem;
+				}
+			}
+
+			if(inFolder) {
+				newItem = curItem->getParent();
+				if (newItem) {
+					curItem = newItem;
+				}
 			}
 		}
+		this->addItem(curItem);
 	}
 
-	this->addItem (curItem);
-
-	free(buffer);
 	return true;
 }
 
@@ -315,5 +332,5 @@ CheatGame* CheatCodelist::getGame (uint32_t gameid, uint32_t headerCRC)
 		}
 	}
 
-	return NULL;
+	return nullptr;
 }

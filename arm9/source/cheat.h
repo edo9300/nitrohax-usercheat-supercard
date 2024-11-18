@@ -196,7 +196,7 @@ public:
 
 	~CheatCodelist ();
 
-	bool load (FILE* fp, uint32_t gameid, uint32_t headerCRC, bool filter);
+	bool load (FILE* fp, uint32_t gameid, uint32_t* headerCRCs, bool filter);
 
 	CheatGame* getGame (uint32_t gameid, uint32_t headerCRC);
 
@@ -207,7 +207,12 @@ private:
 		uint32_t _crc32;
 		uint64_t _offset;
 	};
-	bool searchCheatData(FILE* aDat, uint32_t gamecode, uint32_t crc32, long& aPos, size_t& aSize);
+	struct CheatEntry {
+		long offset;
+		long size;
+		uint32_t crc32;
+	};
+	std::vector<CheatEntry> searchCheatData(FILE* aDat, uint32_t gamecode);
 
 } ;
 
