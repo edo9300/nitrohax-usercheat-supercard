@@ -11,7 +11,7 @@ export TARGET		:=	NitroHax
 export TOPDIR		:=	$(CURDIR)
 
 export VERSION_MAJOR	:= 1
-export VERSION_MINOR	:= 00
+export VERSION_MINOR	:= 01
 export VERSTRING	:=	$(VERSION_MAJOR).$(VERSION_MINOR)
 
 
