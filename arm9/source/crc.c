@@ -19,8 +19,9 @@
 #include "crc.h"
 
 #define CRCPOLY 0xedb88320
-uint32_t crc32Partial(const char* p, size_t len, uint32_t crc)
+uint32_t crc32Partial(const void* pvoid, size_t len, uint32_t crc)
 {
+	const uint8_t* p = (uint8_t*)pvoid;
 	while(len--)
 	{
 		crc^=*p++;
@@ -29,7 +30,7 @@ uint32_t crc32Partial(const char* p, size_t len, uint32_t crc)
 	return crc;
 }
 
-uint32_t crc32(const char* p,size_t len)
+uint32_t crc32(const void* pvoid,size_t len)
 {
-	return crc32Partial(p, len, UINT32_C(~0));
+	return crc32Partial(pvoid, len, UINT32_C(~0));
 }
