@@ -48,6 +48,8 @@ int main(void) {
 
 	SetYtrigger(80);
 
+	touchInit();
+
 	installSystemFIFO();
 
 	irqSet(IRQ_VCOUNT, VcountHandler);
