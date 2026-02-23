@@ -20,7 +20,7 @@
 #include <stdio.h>
 #include <iterator>
 #include <algorithm>
-#include <array>
+#include <span>
 
 #include "ui.h"
 
@@ -79,36 +79,67 @@ std::vector<CheatWord> CheatCode::getEnabledCodeData (void)
 	return codeData;
 }
 
+static void patchDatelHacks(std::vector<CheatWord>& cheatData)
+{
+	std::span<uint64_t> u64Data{reinterpret_cast<uint64_t*>(cheatData.data()), cheatData.size() / 2};
+	auto nopOut = [](auto& it) {
+		// replace with a NOP operation (add 0 to offset)
+		*it = 0x00000000D4000000;
+		++it;
+	};
+
+	static constexpr uint64_t D4_ORR_hack{ 0xE1833004023FE424 };
+	static constexpr uint64_t D4_AND_hack{ 0xE0033004023FE424 };
+	static constexpr uint64_t D4_ADD_hack{ 0xE0833004023FE424 };
+	auto patchD4Hack = [&u64Data, &nopOut](const auto hackPattern, auto patchedInstructionFlag) {
+		if(auto start = std::ranges::find(u64Data, hackPattern);
+			start != u64Data.end()) {
+			nopOut(start);
+			auto end = std::find(start, u64Data.end(), D4_ADD_hack);
+			if(auto it = std::find_if(start, end, [](auto elem) { return (elem & 0xFFFFFFFF) == 0xD4000000; }); it != end) {
+				// Replace 0xD4 code with nitrohax's custom operator code
+				*it |= patchedInstructionFlag;
+			}
+			if(end != u64Data.end()) {
+				nopOut(end);
+			}
+		}
+	};
+
+	patchD4Hack(D4_ORR_hack, 0x1);
+	patchD4Hack(D4_AND_hack, 0x2);
+	patchD4Hack(D4_ADD_hack, 0x0);
+
+	static constexpr uint64_t DB_code_fix_hack{ 0x0A000003023FE4D8 };
+	if(auto start = std::ranges::find(u64Data, DB_code_fix_hack);
+		start != u64Data.end()) {
+		nopOut(start);
+	}
+
+	// Make the asm cheats designed for ards work with nitrohax
+	// Make 0x0E handler execute the data as arm
+	static constexpr uint64_t asm_hack_start{ 0x012FFF11023FE074 };
+	// Restore behaviour of 0x0E handler
+	static constexpr uint64_t asm_hack_end{ 0xE3520003023FE074 };
+	if(auto start = std::ranges::find(u64Data, asm_hack_start);
+		start != u64Data.end()) {
+		nopOut(start);
+		auto end = std::find(start, u64Data.end(), asm_hack_end);
+		if(auto it = std::find_if(start, end, [](auto elem) { return (elem & 0xFFFFFFFF) == 0xE0000000; }); it != end) {
+			// Replace 0x0E code with nitrohax's 0xC2 in arm mode (0xXXXXXXXXE0000000 - 0xXXXXXXXX1E000000 = 0xXXXXXXXXC2000000)
+			*it -= 0x1E000000;
+		}
+		if(end != u64Data.end()) {
+			nopOut(end);
+		}
+	}
+}
+
 void CheatCode::setCodeData (const CheatWord *codeData, int codeLen)
 {
 	cheatData = std::vector<CheatWord>(codeLen);
 	memcpy(cheatData.data(), codeData, codeLen * 4);
-
-	// Make the asm cheats designed for ards work with nitrohax
-	// Make 0x0E handler execute the data as arm
-	static constexpr std::array<unsigned, 2> asm_hack_start{ 0x023FE074, 0x012FFF11 };
-	// Restore behaviour of 0x0E handler
-	static constexpr std::array<unsigned, 2> asm_hack_end{ 0x023FE074, 0xE3520003 };
-	auto start = std::search(cheatData.begin(), cheatData.end(), asm_hack_start.begin(), asm_hack_start.end());
-	if(start != cheatData.end()) {
-		// replace with a NOP operation (add 0 to offset)
-		*start = 0xD4000000;
-		++start;
-		*start = 0x00000000;
-		++start;
-		auto end = std::search(start, cheatData.end(), asm_hack_end.begin(), asm_hack_end.end());
-		if(auto it = std::find(start, end, 0xE0000000); it != end) {
-			// Replace 0x0E code with nitrohax's 0xC2 in arm mode
-			*it = 0xC2000000;
-		}
-		// replace with a NOP operation (add 0 to offset)
-		if(end != cheatData.end()) {
-			*end = 0xD4000000;
-			++end;
-			*end = 0x00000000;
-			++end;
-		}
-	}
+	patchDatelHacks(cheatData);
 }
 
 void CheatCode::toggleEnabled (void)
