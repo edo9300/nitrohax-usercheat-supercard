@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <iterator>
 #include <algorithm>
+#include <array>
 
 #include "ui.h"
 
@@ -83,64 +84,31 @@ void CheatCode::setCodeData (const CheatWord *codeData, int codeLen)
 	cheatData = std::vector<CheatWord>(codeLen);
 	memcpy(cheatData.data(), codeData, codeLen * 4);
 
-	// const char* codeData = data.c_str();
-	// char codeinfo[30];
-	// int value;
-	// int codeLen = strlen (codeData);
-	// int codePos = 0;
-	// int readNum = 1;
-
-	// const char ALWAYS_ON[] = "always_on";
-	// const char ON[] = "on";
-	// const char MASTER[] = "master";
-
-	// if (sscanf (codeData, "%29s", codeinfo) > 0) {
-	// 	if (strcmp(codeinfo, ALWAYS_ON) == 0) {
-	// 		always_on = true;
-	// 		enabled = true;
-	// 		codePos += strlen (ALWAYS_ON);
-	// 	} else if (strcmp(codeinfo, ON) == 0) {
-	// 		enabled = true;
-	// 		codePos += strlen (ON);
-	// 	} else if (strcmp(codeinfo, MASTER) == 0) {
-	// 		master = true;
-	// 		codePos += strlen (MASTER);
-	// 	}
-	// }
-
-	// while ((codePos < codeLen) && (readNum > 0)) {
-	// 	// Move onto the next hexadecimal value
-	// 	codePos += strcspn (codeData + codePos, HEX_CHARACTERS);
-	// 	readNum = sscanf (codeData + codePos, "%x", &value);
-	// 	if (readNum > 0) {
-	// 		cheatData.push_back (value);
-	// 		codePos += CODE_WORD_LEN;
-	// 	} else {
-	// 		readNum = sscanf (codeData + codePos, "%29s", codeinfo);
-	// 		if (readNum > 0) {
-	// 			codePos += strlen (codeinfo);
-	// 		}
-	// 	}
-	// }
-
-	// if (master && (cheatData.size() >= 2)) {
-	// 	if ((*(cheatData.begin()) & 0xFF000000) == 0xCF000000) {
-	// 		// Master code meant for Nitro Hax
-	// 		always_on = true;
-	// 		enabled = true;
-	// 	} else if ((cheatData.size() >= 18) && (*(cheatData.begin()) == 0x00000000)) {
-	// 		// Master code meant for the Action Replay
-	// 		// Convert it for Nitro Hax
-	// 		CheatWord relocDest;
-	// 		std::list<CheatWord>::iterator i = cheatData.begin();
-	// 		std::advance (i, 13);
-	// 		relocDest = *i;
-	// 		cheatData.clear();
-	// 		cheatData.push_back (CHEAT_ENGINE_RELOCATE);
-	// 		cheatData.push_back (relocDest);
-	// 		enabled = true;
-	// 	}
-	// }
+	// Make the asm cheats designed for ards work with nitrohax
+	// Make 0x0E handler execute the data as arm
+	static constexpr std::array<unsigned, 2> asm_hack_start{ 0x023FE074, 0x012FFF11 };
+	// Restore behaviour of 0x0E handler
+	static constexpr std::array<unsigned, 2> asm_hack_end{ 0x023FE074, 0xE3520003 };
+	auto start = std::search(cheatData.begin(), cheatData.end(), asm_hack_start.begin(), asm_hack_start.end());
+	if(start != cheatData.end()) {
+		// replace with a NOP operation (add 0 to offset)
+		*start = 0xD4000000;
+		++start;
+		*start = 0x00000000;
+		++start;
+		auto end = std::search(start, cheatData.end(), asm_hack_end.begin(), asm_hack_end.end());
+		if(auto it = std::find(start, end, 0xE0000000); it != end) {
+			// Replace 0x0E code with nitrohax's 0xC2 in arm mode
+			*it = 0xC2000000;
+		}
+		// replace with a NOP operation (add 0 to offset)
+		if(end != cheatData.end()) {
+			*end = 0xD4000000;
+			++end;
+			*end = 0x00000000;
+			++end;
+		}
+	}
 }
 
 void CheatCode::toggleEnabled (void)
